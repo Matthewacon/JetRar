@@ -1,5 +1,12 @@
 #!/bin/env bash
-USAGE="Test Usage!"
+read -r -d '' USAGE << EOUSAGE
+USAGE: ./license_hack.sh [OPTIONS ...]
+\n\n all			- Reset trial licenses for all JetBrains products
+\n idea	intellij	- Reset trial license for IntelliJ
+\n clion			- Reset trial for CLion
+\n pycharm		- Reset trial for PyCharm
+EOUSAGE
+
 parseArgs() {
  local args="$@"
  local ret=""
@@ -85,6 +92,7 @@ delete() {
 ret=$(delete "$@")
 if [[ $ret == -1 ]]; then
  echo -e $USAGE
+ exit 1
 else
  echo "License renewal successful!"
 fi
