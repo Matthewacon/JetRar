@@ -11,4 +11,4 @@ JetRar is a simple bash script that renews the trial licenses of all of JetBrain
 	bash license_hack.sh
 
 ## License
-JetRar is licensed under the [MIT License](https://github.com/Matthewacon/JetRar/blob/merging/LICENSE)
+JetRar is licensed under the [MIT License](https://github.com/Matthewacon/JetRar/blob/master/LICENSE)
