@@ -1,98 +1,51 @@
 #!/bin/env bash
 read -r -d '' USAGE << EOUSAGE
 USAGE: ./license_hack.sh [OPTIONS ...]
-\n\n all			- Reset trial licenses for all JetBrains products
-\n idea	intellij	- Reset trial license for IntelliJ
-\n clion			- Reset trial for CLion
-\n pycharm		- Reset trial for PyCharm
+\n\n all\t\t- Reset trial licenses for all JetBrains products
+\n intellij\t- Reset trial license for IntelliJ
+\n clion\t\t- Reset trial for CLion
+\n pycharm\t- Reset trial for PyCharm
 EOUSAGE
-
-parseArgs() {
- local args="$@"
- local ret=""
- for arg in $args 
- do
-  ret=$(
-   case $arg in
-    ("all") echo "a"; break;;
-    ("idea") echo "i"$ret;;
-    ("intellij") echo "i"$ret;;
-    ("clion") echo "c"$ret;;
-    ("pycharm") echo "p"$ret;;
-    (*) echo; break;;
-   esac)
- done
- echo $ret
-}
-
-isFileOrDir() {
- if [[ ! -d $1 && ! -f $1 ]]; then
-  echo -1
- fi
- if [ -d $1 ]; then
-  echo "dir"
- elif [ -f $1 ]; then
-  echo "file"
- fi
-}
-
-pathExists() {
- local path=$1
- #isSymb?
- if [ -L $path ]; then
-  path=$(readlink -f $path)
- fi
- if [[ $(isFileOrDir $path) == -1 ]]; then
-  echo false
- else
-  echo true
- fi
-}
 
 getHomeDir() {
  local usr=$(whoami)
  eval echo "~$usr"
 }
 
-resetIntelliJ() {
- local homeDir=$(getHomeDir)
- rm -rf $(find $homeDir -maxdepth 1 -type d -name '*.IntelliJIdea*')"/config/eval"
- rm -rf $(getHomeDir)".local/share/JetBrains"
+resetTrial() {
+ local lArgs=($@)
+ [[ ${#lArgs[@]} > 1 ]] || [[ ${#lArgs[@]} == 0 ]] && echo -1 && return;
+ local home=$(getHomeDir)
+ local ret=$(
+  case $lArgs in
+   "all") echo "intellijidea clion pycharm";;
+   "intellij") echo "intellijidea";;
+   "clion") echo "clion";;
+   "pycharm") echo "pycharm";;
+   *) echo -1;;
+  esac)
+ [[ $ret == -1 ]] && echo -1 && return;
+ #printf '%b ' $home
+ rm -rf "$home/.java/.userPrefs/" "$home/.local/share/JetBrains"
+ local apply=""
+ for exp in $ret; do
+  local findMe=$(ls -a $home | grep -i $exp)
+  cd $home
+  #printf '%b ' "before"
+  apply=$apply$(find ./$findMe)
+  #printf '%b ' "after"
+  local ex=$(find ./$findMe | grep -vi "\.\/")
+  #printf '%b ' $ex
+  ex=($ex)
+  for exclude in $ex; do
+   apply=$(echo $apply | grep -vi $exclude)
+  done
+  rm -rf "$home/$findMe/config/eval" "$home/$findMe/config/options/options.xml"
+ done
+# for file in $apply; do touch $file; done
+ echo 0;
+ return;
 }
 
-resetCLion() {
- local homeDir=$(getHomeDir)
-  rm -rf $(find $homeDir -maxdepth 1 -type d -name '*.PyCharm*')"/config/eval"
- rm -rf $(getHomeDir)".local/share/JetBrains"
-}
-
-resetPyCharm() {
- local homeDir=$(getHomeDir)
- rm -rf $(find $homeDir -maxdepth 1 -type d -name '*.CLion*')"/config/eval"
- rm -rf $(getHomeDir)".local/share/JetBrains"
-}
-
-delete() {
- local args=$(parseArgs "$@")
- if [[ ${#args} -le 0 || ${#args} -gt 3 ]]; then
-  echo -1;
- else 
-  if [[ $args == *"a"* ]]; then
-   resetIntelliJ; resetCLion; resetPyCharm;
-  elif [[ $args == *"i"* ]]; then
-   resetIntelliJ;
-  elif [[ $args == *"c"* ]]; then
-   resetCLion;
-  elif [[ $args == *"p"* ]]; then
-   resetPyCharm;
-  fi
- fi
-}
-
-ret=$(delete "$@")
-if [[ $ret == -1 ]]; then
- echo -e $USAGE
- exit 1
-else
- echo "License renewal successful!"
-fi
+[[ $(resetTrial "$@") == 0 ]] && printf '%b ' "License renewal successful!" && exit 0;
+printf '%b ' $USAGE
