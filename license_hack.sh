@@ -25,17 +25,14 @@ resetTrial() {
    *) echo -1;;
   esac)
  [[ $ret == -1 ]] && echo -1 && return;
- #printf '%b ' $home
  rm -rf "$home/.java/.userPrefs/" "$home/.local/share/JetBrains"
  local apply=""
  for exp in $ret; do
   local findMe=$(ls -a $home | grep -i $exp)
+  [[ -n $findMe ]] && continue;
   cd $home
-  #printf '%b ' "before"
   apply=$apply$(find ./$findMe)
-  #printf '%b ' "after"
   local ex=$(find ./$findMe | grep -vi "\.\/")
-  #printf '%b ' $ex
   ex=($ex)
   for exclude in $ex; do
    apply=$(echo $apply | grep -vi $exclude)
